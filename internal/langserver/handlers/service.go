@@ -53,6 +53,8 @@ type service struct {
 	decoder          *decoder.Decoder
 	stateStore       *state.StateStore
 
+	jrpcSvr *jrpc2.Server
+
 	additionalHandlers map[string]rpch.Func
 }
 
@@ -446,6 +448,13 @@ func (svc *service) configureSessionDependencies(ctx context.Context, cfgOpts *s
 	svc.stateStore.SetLogger(svc.logger)
 	svc.stateStore.Modules.ChangeHooks = state.ModuleChangeHooks{
 		sendModuleTelemetry(svc.sessCtx, svc.stateStore, svc.telemetry),
+		func(_, newMod *state.Module) {
+			svc.logger.Printf("Sending refresh notification for %s", newMod.Path)
+			_, err := svc.jrpcSvr.Callback(svc.srvCtx, "workspace/semanticTokens/refresh", nil)
+			if err != nil {
+				svc.logger.Printf("Error refreshing %s: %s", newMod.Path, err)
+			}
+		},
 	}
 
 	svc.modStore = svc.stateStore.Modules

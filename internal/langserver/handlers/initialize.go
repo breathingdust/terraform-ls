@@ -155,6 +155,8 @@ func (svc *service) Initialize(ctx context.Context, params lsp.InitializeParams)
 
 	serverCaps.Capabilities.SemanticTokensProvider = semanticTokensOpts
 
+	svc.jrpcSvr = jrpc2.ServerFromContext(ctx)
+
 	// set commandPrefix for session
 	lsctx.SetCommandPrefix(ctx, out.Options.CommandPrefix)
 	// apply prefix to executeCommand handler names
